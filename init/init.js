@@ -27,7 +27,7 @@ if (!day) {
   const fileStream = createWriteStream(filePath);
   try {
     const response = await download(
-      `https://adventofcode.com/2021/day/${day}/input`
+      `https://adventofcode.com/2022/day/${day}/input`
     );
     response.pipe(fileStream);
     await new Promise((res) => fileStream.on("finish", res));
