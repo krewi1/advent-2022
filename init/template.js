@@ -5,6 +5,6 @@ import { loadByLines } from "../helper/fileLoader.js";
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
 const lines = loadByLines(join(currentDir, "input.txt"));
-export function run() {
+(function run() {
   console.log(lines);
-}
+})();
