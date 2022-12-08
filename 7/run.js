@@ -23,7 +23,6 @@ const lines = loadByLines(join(currentDir, "input.txt")).filter(Boolean);
           node = currentNode;
         }
       }
-    } else if (line.indexOf("dir") > -1) {
     } else {
       const [size, file] = line.split(" ");
       const currentNode = {
