@@ -59,9 +59,6 @@ const rounds = 10000;
         }
       }
     }
-    if ((round + 1) % 1000 === 0 || round + 1 === 1 || round + 1 === 20) {
-      console.log("round", round + 1, inspects);
-    }
   }
   inspects = inspects.sort((a, b) => b - a);
   console.log(inspects[0] * inspects[1]);
