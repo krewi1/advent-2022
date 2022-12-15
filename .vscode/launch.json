@@ -10,7 +10,7 @@
       "name": "Launch Program",
       "runtimeVersion": "19.1.0",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/14/run.js"
+      "program": "${workspaceFolder}/15/run.js"
     }
   ]
 }
