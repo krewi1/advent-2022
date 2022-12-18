@@ -5,7 +5,7 @@ import { printMatrix } from "../helper/matrix.js";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
-const lines = loadPure(join(currentDir, "test.txt")).trim();
+const lines = loadPure(join(currentDir, "input.txt")).trim();
 const moves = [...lines];
 
 const Move = {
@@ -67,8 +67,10 @@ const shapes = [
   ],
 ];
 
-// const iterations = 1000000000000;
-const iterations = 2022;
+const iterations = 1000000000000;
+// const iterations = 2022;
+
+const surfaceMap = new Map();
 
 (function run() {
   console.time();
@@ -84,14 +86,17 @@ const iterations = 2022;
     [0, 6],
   ];
   const depth = [new Array(7).fill(1)];
+  let top = 0;
 
+  let mCounter = -1;
   for (let i = 1; i <= iterations; i++) {
     const shape = sg.next().value;
-    const maxY = Math.max(...surface.map((i) => i[0]));
-    let ss = shape.map(([y, x]) => [y + maxY + 4, x]);
+    let ss = shape.map(([y, x]) => [y + top + 4, x]);
     let c = false;
+    let m;
     while (!c) {
-      const m = mg.next().value;
+      mCounter++;
+      m = Move[moves[mCounter % moves.length]];
 
       // jet gas
       let newArr = [];
@@ -133,6 +138,28 @@ const iterations = 2022;
       surface[x] = [Math.max(y, surface[x][0]), x];
     });
 
+    const min = Math.min(...surface.map(([y]) => y));
+    const normalized = surface.map(([y, x]) => y - min);
+    top = Math.max(...surface.map(([y]) => y));
+    const key = normalized
+      .join(":")
+      .concat(shape.map(([y, x]) => x).join(":"))
+      .concat(`${mCounter % moves.length}`);
+    if (surfaceMap.has(key)) {
+      const sm = surfaceMap.get(key);
+      const smv = [...surfaceMap.values()];
+      let smIndex = smv.indexOf(sm);
+      const cycleHeight = top - sm[1];
+      const cycleLength = i - sm[0];
+      const times = Math.floor((iterations - i) / cycleLength);
+      const currentCycles = times * cycleLength + i;
+      let missingCycles = iterations - currentCycles;
+      let addition = smv[smIndex + missingCycles][1] - sm[1];
+      top = times * cycleHeight + top + addition;
+      break;
+    }
+    surfaceMap.set(key, [i, top]);
+
     // let drawMetrix = depth.map((d) => [...d]);
     // const yL = drawMetrix.length;
     // const xL = drawMetrix[0].length;
@@ -150,5 +177,5 @@ const iterations = 2022;
     // console.log();
   }
   console.timeEnd();
-  console.log(Math.max(...surface.map((s) => s[0])));
+  console.log(top);
 })();
