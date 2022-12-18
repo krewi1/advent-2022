@@ -4,56 +4,87 @@ import { loadByLines } from "../helper/fileLoader.js";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
-const lines = loadByLines(join(currentDir, "test.txt"))
+const lines = loadByLines(join(currentDir, "input.txt"))
   .filter(Boolean)
   .map((l) => l.split(",").map((ch) => +ch));
 
-const mesh = new Map();
+function getKey(point) {
+  return point.join(":");
+}
 
-const top = [0, 1];
-const down = [0, -1];
-const left = [-1, 0];
-const right = [1, 0];
-const sides = [top, down, left, right];
+const pointMap = lines.reduce((acc, point) => {
+  acc.set(getKey(point), point);
+  return acc;
+}, new Map());
+
+const top = [0, 1, 0];
+const down = [0, -1, 0];
+const left = [-1, 0, 0];
+const right = [1, 0, 0];
+const up = [0, 0, 1];
+const bottom = [0, 0, -1];
+const sides = [top, down, left, right, up, bottom];
+const flowAble = new Set();
+
 (function run() {
-  lines.forEach(([x, y, z]) => {
-    const key = `${x}:${y}`;
-    const meshZs = mesh.get(key) ?? [];
-    meshZs.push(z);
-    mesh.set(key, meshZs);
-  });
   const xs = lines.map(([x]) => x);
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
   const ys = [...lines.map(([, y]) => y)];
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
+  const zs = [...lines.map(([, , z]) => z)];
+  const minZ = Math.min(...zs);
+  const maxZ = Math.max(...zs);
+
+  function reachBoundary([x, y, z]) {
+    return x < minX || x > maxX || y < minY || y > maxY || z < minZ || z > maxZ;
+  }
+
+  function canFlow(point, prevPointKeys = new Set()) {
+    if (flowAble.has(getKey(point))) {
+      return true;
+    }
+
+    prevPointKeys.add(getKey(point));
+    if (pointMap.has(getKey(point))) {
+      return false;
+    }
+    const directions = sides
+      .map(([sx, sy, sz]) => [point[0] + sx, point[1] + sy, point[2] + sz])
+      .filter((dir) => !prevPointKeys.has(getKey(dir)));
+
+    if (directions.some((point) => reachBoundary(point))) {
+      flowAble.add(getKey([point[0], point[1], point[2]]));
+      return true;
+    }
+
+    return directions.some((dir) => canFlow(dir, prevPointKeys));
+  }
 
   const visible = [];
   for (let x = minX; x <= maxX; x++) {
     for (let y = minY; y <= maxY; y++) {
-      const zs = mesh.get(`${x}:${y}`) ?? [];
-      if (!zs.length) {
-        continue;
-      }
-      let visibleSides = zs.reduce((acc, curr) => {
-        const topAdjenced = zs.indexOf(curr + 1) !== -1 ? -1 : 0;
-        const downAdjenced = zs.indexOf(curr - 1) !== -1 ? -1 : 0;
-        return acc + 6 + topAdjenced + downAdjenced;
-      }, 0);
+      for (let z = minZ; z <= maxZ; z++) {
+        const item = pointMap.get(getKey([x, y, z]));
+        if (x === 2 && y === 2 && z === 5) {
+          console.log();
+        }
+        if (!item) {
+          continue;
+        }
 
-      visible.push(
-        sides.reduce((acc, [sx, sy]) => {
-          const currX = x + sx;
-          const currY = y + sy;
-          const szs = mesh.get(`${currX}:${currY}`) ?? [];
-          const sameSides = szs.reduce(
-            (acc, curr) => (zs.indexOf(curr) !== -1 ? acc + 1 : acc),
-            0
-          );
-          return acc - sameSides;
-        }, visibleSides)
-      );
+        const siblings = sides.reduce((acc, [sx, sy, sz]) => {
+          const sibling = [x + sx, y + sy, z + sz];
+          if (sibling[0] === 2 && sibling[1] === 2 && sibling[2] === 5) {
+            console.log();
+          }
+          return pointMap.has(getKey(sibling)) || !canFlow(sibling)
+            ? acc + 1
+            : acc;
+        }, 0);
+        visible.push(6 - siblings);
+      }
     }
   }
 
